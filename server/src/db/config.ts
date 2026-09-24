@@ -1,8 +1,7 @@
 import type { config as MssqlConfig } from 'mssql'
+import { SUCURSAL_IDS, type Sucursal } from '../config/sucursales.js'
 
-export type Sucursal = 'lavalle' | 'savio' | 'somisa'
-
-export const SUCURSALES: Sucursal[] = ['lavalle', 'savio', 'somisa']
+export type { Sucursal }
 
 function configSucursal(sucursal: Sucursal): MssqlConfig {
   const prefix = `DB_${sucursal.toUpperCase()}`
@@ -19,8 +18,6 @@ function configSucursal(sucursal: Sucursal): MssqlConfig {
   }
 }
 
-export const dbConfigs: Record<Sucursal, MssqlConfig> = {
-  lavalle: configSucursal('lavalle'),
-  savio: configSucursal('savio'),
-  somisa: configSucursal('somisa'),
-}
+export const dbConfigs: Record<Sucursal, MssqlConfig> = Object.fromEntries(
+  SUCURSAL_IDS.map((id) => [id, configSucursal(id)]),
+)

@@ -1,5 +1,6 @@
 import sql from 'mssql'
-import { dbConfigs, SUCURSALES, type Sucursal } from './config.js'
+import { dbConfigs, type Sucursal } from './config.js'
+import { SUCURSAL_IDS } from '../config/sucursales.js'
 
 const pools = new Map<Sucursal, sql.ConnectionPool>()
 
@@ -16,5 +17,5 @@ export async function getPool(sucursal: Sucursal): Promise<sql.ConnectionPool> {
 }
 
 export async function cerrarPools(): Promise<void> {
-  await Promise.all(SUCURSALES.map((s) => pools.get(s)?.close()))
+  await Promise.all(SUCURSAL_IDS.map((s) => pools.get(s)?.close()))
 }

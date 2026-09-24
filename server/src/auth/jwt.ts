@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import type { Sucursal } from '../db/config.js'
+import type { Sucursal } from '../config/sucursales.js'
 
 const SECRET = process.env.JWT_SECRET!
 const COOKIE_NAME = 'token'

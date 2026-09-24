@@ -1,4 +1,4 @@
-import type { Sucursal } from '../db/config.js'
+import { SUCURSAL_IDS, type Sucursal } from '../config/sucursales.js'
 
 export type Usuario = {
   usuario: string
@@ -6,25 +6,17 @@ export type Usuario = {
   sucursales: Sucursal[] | 'todas'
 }
 
+const usuariosPorSucursal: Usuario[] = SUCURSAL_IDS.map((id) => ({
+  usuario: process.env[`LOGIN_${id.toUpperCase()}_USER`]!,
+  password: process.env[`LOGIN_${id.toUpperCase()}_PASSWORD`]!,
+  sucursales: [id],
+}))
+
 export const USUARIOS: Usuario[] = [
+  ...usuariosPorSucursal,
   {
-    usuario: process.env.LOGIN_LAVALLE_USER!,
-    password: process.env.LOGIN_LAVALLE_PASSWORD!,
-    sucursales: ['lavalle'],
-  },
-  {
-    usuario: process.env.LOGIN_SAVIO_USER!,
-    password: process.env.LOGIN_SAVIO_PASSWORD!,
-    sucursales: ['savio'],
-  },
-  {
-    usuario: process.env.LOGIN_SOMISA_USER!,
-    password: process.env.LOGIN_SOMISA_PASSWORD!,
-    sucursales: ['somisa'],
-  },
-  {
-    usuario: process.env.LOGIN_IVAN_USER!,
-    password: process.env.LOGIN_IVAN_PASSWORD!,
+    usuario: process.env.LOGIN_ADMIN_USER!,
+    password: process.env.LOGIN_ADMIN_PASSWORD!,
     sucursales: 'todas',
   },
 ]

@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth'
+import { useTenant } from '@/lib/tenant'
 
 export function LoginPage() {
   const { login } = useAuth()
+  const tenant = useTenant()
   const navigate = useNavigate()
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
@@ -34,7 +36,11 @@ export function LoginPage() {
     <div className="flex min-h-svh items-center justify-center bg-navy-deep p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <h1 className="text-center text-2xl font-semibold text-foreground">SUPER JOSE</h1>
+          {tenant.logoUrl ? (
+            <img src={tenant.logoUrl} alt={tenant.nombreCliente} className="mx-auto max-h-16" />
+          ) : (
+            <h1 className="text-center text-2xl font-semibold text-foreground">{tenant.nombreCliente}</h1>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4">

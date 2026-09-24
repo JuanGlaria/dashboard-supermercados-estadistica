@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/lib/auth'
+import { TenantProvider } from '@/lib/tenant'
 import { LoginPage } from '@/pages/LoginPage'
 import { SelectorSucursalPage } from '@/pages/SelectorSucursalPage'
 
@@ -17,39 +18,41 @@ function RutaPrivada({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <RutaPrivada>
-                <SelectorSucursalPage />
-              </RutaPrivada>
-            }
-          />
-          <Route
-            path="/dashboard/:sucursal"
-            element={
-              <RutaPrivada>
-                <Suspense fallback={<div className="p-8 text-muted-foreground">Cargando...</div>}>
-                  <DashboardPage />
-                </Suspense>
-              </RutaPrivada>
-            }
-          />
-          <Route
-            path="/anulados/:sucursal"
-            element={
-              <RutaPrivada>
-                <Suspense fallback={<div className="p-8 text-muted-foreground">Cargando...</div>}>
-                  <AnuladosPage />
-                </Suspense>
-              </RutaPrivada>
-            }
-          />
-        </Routes>
-      </AuthProvider>
+      <TenantProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/"
+              element={
+                <RutaPrivada>
+                  <SelectorSucursalPage />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/dashboard/:sucursal"
+              element={
+                <RutaPrivada>
+                  <Suspense fallback={<div className="p-8 text-muted-foreground">Cargando...</div>}>
+                    <DashboardPage />
+                  </Suspense>
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="/anulados/:sucursal"
+              element={
+                <RutaPrivada>
+                  <Suspense fallback={<div className="p-8 text-muted-foreground">Cargando...</div>}>
+                    <AnuladosPage />
+                  </Suspense>
+                </RutaPrivada>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </TenantProvider>
     </BrowserRouter>
   )
 }

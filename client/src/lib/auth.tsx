@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
-export type Sucursal = 'lavalle' | 'savio' | 'somisa'
+export type Sucursal = string
 
 export type Usuario = {
   usuario: string

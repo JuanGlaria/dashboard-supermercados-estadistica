@@ -2,12 +2,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import { Sidebar } from '@/components/Sidebar'
-
-const NOMBRES: Record<string, string> = {
-  lavalle: 'Lavalle',
-  savio: 'Savio',
-  somisa: 'Somisa',
-}
+import { useTenant } from '@/lib/tenant'
 
 function sidebarVisibleInicial() {
   if (typeof window === 'undefined') return true
@@ -16,8 +11,9 @@ function sidebarVisibleInicial() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { sucursal } = useParams()
+  const tenant = useTenant()
   const [sidebarAbierto, setSidebarAbierto] = useState(sidebarVisibleInicial)
-  const nombreSucursal = sucursal ? (NOMBRES[sucursal] ?? sucursal) : ''
+  const nombreSucursal = sucursal ? (tenant.sucursales.find((s) => s.id === sucursal)?.nombre ?? sucursal) : ''
 
   const fechaHoy = new Date().toLocaleDateString('es-AR', {
     weekday: 'long',

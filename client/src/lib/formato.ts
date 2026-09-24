@@ -14,6 +14,12 @@ export function formatoFechaLarga(iso: string): string {
   return `${dias[fecha.getDay()]} ${day}/${month}`
 }
 
+export function fechaISOHoy(): string {
+  const hoy = new Date()
+  const sinOffset = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000)
+  return sinOffset.toISOString().slice(0, 10)
+}
+
 export function abreviarMoneda(valor: number): string {
   if (valor >= 1e6) return `${(valor / 1e6).toFixed(1)}M`
   if (valor >= 1e3) return `${(valor / 1e3).toFixed(1)}k`

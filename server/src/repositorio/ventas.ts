@@ -177,8 +177,8 @@ export type DashboardVentas = {
   eventosTickets: EventosTickets
 }
 
-export async function getDashboardVentas(pool: ConnectionPool): Promise<DashboardVentas> {
-  const fechaHoy = hoy()
+export async function getDashboardVentas(pool: ConnectionPool, fecha: Date = hoy()): Promise<DashboardVentas> {
+  const fechaHoy = fecha
   const fechaAyer = sumarDias(fechaHoy, -1)
   const inicioSemanaActual = inicioSemana(fechaHoy)
   const inicioSemanaPasada = sumarDias(inicioSemanaActual, -7)

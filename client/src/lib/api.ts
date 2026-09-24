@@ -40,6 +40,11 @@ export type Anulados = {
 
 export type ResumenAnuladosSucursal = { sucursal: string; totalHoy: number | null }
 
+export type HistorialCajero = { fecha: string; nticket: string }[]
+
+export type DetalleTicketItem = { canti: number; nombre: string; marca: string | null; preciou: number; preciot: number }
+export type DetalleTicket = { items: DetalleTicketItem[]; total: number }
+
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url, { credentials: 'include' })
   if (!res.ok) {
@@ -49,14 +54,22 @@ async function get<T>(url: string): Promise<T> {
   return res.json()
 }
 
-export function getDashboard(sucursal: string) {
-  return get<DashboardVentas>(`/api/dashboard/${sucursal}`)
+export function getDashboard(sucursal: string, fecha?: string) {
+  return get<DashboardVentas>(`/api/dashboard/${sucursal}${fecha ? `?fecha=${fecha}` : ''}`)
 }
 
-export function getAnulados(sucursal: string) {
-  return get<Anulados>(`/api/anulados/${sucursal}`)
+export function getAnulados(sucursal: string, fecha?: string) {
+  return get<Anulados>(`/api/anulados/${sucursal}${fecha ? `?fecha=${fecha}` : ''}`)
 }
 
 export function getResumenAnulados() {
   return get<ResumenAnuladosSucursal[]>('/api/anulados/resumen')
+}
+
+export function getHistorialCajero(sucursal: string, codigo: number) {
+  return get<HistorialCajero>(`/api/anulados/${sucursal}/cajero/${codigo}`)
+}
+
+export function getDetalleTicket(sucursal: string, nticket: number, letra: string, caja: number) {
+  return get<DetalleTicket>(`/api/anulados/${sucursal}/ticket/${nticket}?letra=${letra}&caja=${caja}`)
 }

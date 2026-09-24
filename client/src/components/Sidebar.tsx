@@ -74,7 +74,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         </nav>
 
         <div className="border-t border-sidebar-border p-5">
-          <Button variant="destructive" className="w-full gap-2" onClick={cerrarSesion}>
+          <Button
+            variant="destructive"
+            className="w-full gap-2 bg-destructive-solid text-primary-foreground hover:bg-destructive-solid/90"
+            onClick={cerrarSesion}
+          >
             <LogOut className="size-4" aria-hidden="true" />
             Cerrar sesión
           </Button>

@@ -66,8 +66,8 @@ export type Anulados = {
   ranking14Dias: RankingCajero[]
 }
 
-export async function getAnulados(pool: ConnectionPool): Promise<Anulados> {
-  const fechaHoy = hoy()
+export async function getAnulados(pool: ConnectionPool, fecha: Date = hoy()): Promise<Anulados> {
+  const fechaHoy = fecha
   const hace14Dias = sumarDias(fechaHoy, -13)
 
   const [historico, totalHoy, rankingHoy, ranking14Dias] = await Promise.all([
@@ -107,7 +107,7 @@ export async function getDetalleTicket(
 export async function getHistorialCajero(
   pool: ConnectionPool,
   codigoCajero: number,
-): Promise<{ fecha: string; nticket: number }[]> {
+): Promise<{ fecha: string; nticket: string }[]> {
   const fechaHoy = hoy()
   const hace14Dias = sumarDias(fechaHoy, -13)
   const result = await pool
@@ -115,7 +115,7 @@ export async function getHistorialCajero(
     .input('desde', sql.Date, hace14Dias)
     .input('hasta', sql.Date, fechaHoy)
     .input('cajero', sql.Int, codigoCajero)
-    .query<{ fecha: Date; nticket: number }>(`
+    .query<{ fecha: Date; nticket: string }>(`
       SELECT fecha, nticket
       FROM EVENTOS
       WHERE fecha BETWEEN @desde AND @hasta AND LEFT(Evento, 2) = '(A' AND cajero = @cajero

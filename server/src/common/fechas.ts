@@ -19,3 +19,10 @@ export function inicioSemana(fecha: Date): Date {
 export function aISO(fecha: Date): string {
   return fecha.toISOString().slice(0, 10)
 }
+
+export function parseFechaQuery(raw: unknown): Date | undefined {
+  if (typeof raw !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return undefined
+  const d = new Date(raw + 'T00:00:00')
+  d.setHours(0, 0, 0, 0)
+  return Number.isNaN(d.getTime()) ? undefined : d
+}

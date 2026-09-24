@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '@/components/AppShell'
 import { ChartCard } from '@/components/ChartCard'
+import { HistorialCajeroDialog, type CajeroSeleccionado } from '@/components/HistorialCajeroDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAnulados, getResumenAnulados, type Anulados, type ResumenAnuladosSucursal } from '@/lib/api'
+import type { EstadoCarga } from '@/lib/estadoCarga'
 import { formatoFecha } from '@/lib/formato'
-
-const NOMBRES: Record<string, string> = {
-  lavalle: 'Lavalle',
-  savio: 'Savio',
-  somisa: 'Somisa',
-}
+import { useTenant } from '@/lib/tenant'
 
 export function AnuladosPage() {
   const { sucursal } = useParams()
+  const [searchParams] = useSearchParams()
+  const fecha = searchParams.get('fecha') ?? undefined
   const navigate = useNavigate()
+  const tenant = useTenant()
   const [resumen, setResumen] = useState<ResumenAnuladosSucursal[] | null>(null)
-  const [datos, setDatos] = useState<Anulados | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [estado, setEstado] = useState<EstadoCarga<Anulados>>({ status: 'cargando' })
+  const [cajero, setCajero] = useState<CajeroSeleccionado | null>(null)
 
   useEffect(() => {
     getResumenAnulados().then(setResumen).catch(() => setResumen([]))
@@ -26,10 +26,11 @@ export function AnuladosPage() {
 
   useEffect(() => {
     if (!sucursal) return
-    setDatos(null)
-    setError(null)
-    getAnulados(sucursal).then(setDatos).catch((err) => setError(err.message))
-  }, [sucursal])
+    setEstado({ status: 'cargando' })
+    getAnulados(sucursal, fecha)
+      .then((datos) => setEstado({ status: 'listo', datos }))
+      .catch((err) => setEstado({ status: 'error', mensaje: err.message }))
+  }, [sucursal, fecha])
 
   return (
     <AppShell>
@@ -46,22 +47,29 @@ export function AnuladosPage() {
               >
                 <span className="text-3xl font-bold text-foreground">{r.totalHoy ?? '—'}</span>
                 <span className="text-xs font-medium text-muted-foreground uppercase">
-                  {NOMBRES[r.sucursal] ?? r.sucursal}
+                  {tenant.sucursales.find((s) => s.id === r.sucursal)?.nombre ?? r.sucursal}
                 </span>
               </button>
             ))}
           </div>
         )}
 
-        {error && <div className="text-destructive">{error}</div>}
-        {!error && !datos && <div className="text-muted-foreground">Cargando...</div>}
-        {datos && <Contenido datos={datos} />}
+        {estado.status === 'error' && <div className="text-destructive">{estado.mensaje}</div>}
+        {estado.status === 'cargando' && <div className="text-muted-foreground">Cargando...</div>}
+        {estado.status === 'listo' && <Contenido datos={estado.datos} onSeleccionarCajero={setCajero} />}
       </div>
+      {sucursal && <HistorialCajeroDialog sucursal={sucursal} cajero={cajero} onOpenChange={(open) => !open && setCajero(null)} />}
     </AppShell>
   )
 }
 
-function Contenido({ datos }: { datos: Anulados }) {
+function Contenido({
+  datos,
+  onSeleccionarCajero,
+}: {
+  datos: Anulados
+  onSeleccionarCajero: (cajero: CajeroSeleccionado) => void
+}) {
   return (
     <div className="flex flex-col gap-6">
       <ChartCard titulo="Anulados — últimos 14 días">
@@ -88,7 +96,7 @@ function Contenido({ datos }: { datos: Anulados }) {
             <CardTitle className="text-sm font-medium text-muted-foreground">Ranking cajeros — hoy</CardTitle>
           </CardHeader>
           <CardContent>
-            <TablaRanking filas={datos.rankingHoy} />
+            <TablaRanking filas={datos.rankingHoy} onSeleccionarCajero={onSeleccionarCajero} />
           </CardContent>
         </Card>
 
@@ -97,7 +105,7 @@ function Contenido({ datos }: { datos: Anulados }) {
             <CardTitle className="text-sm font-medium text-muted-foreground">Ranking cajeros — últimos 14 días</CardTitle>
           </CardHeader>
           <CardContent>
-            <TablaRanking filas={datos.ranking14Dias} />
+            <TablaRanking filas={datos.ranking14Dias} onSeleccionarCajero={onSeleccionarCajero} />
           </CardContent>
         </Card>
       </div>
@@ -105,7 +113,13 @@ function Contenido({ datos }: { datos: Anulados }) {
   )
 }
 
-function TablaRanking({ filas }: { filas: Anulados['rankingHoy'] }) {
+function TablaRanking({
+  filas,
+  onSeleccionarCajero,
+}: {
+  filas: Anulados['rankingHoy']
+  onSeleccionarCajero: (cajero: CajeroSeleccionado) => void
+}) {
   if (filas.length === 0) return <p className="text-sm text-muted-foreground">Sin anulados en el período.</p>
   return (
     <table className="w-full text-sm">
@@ -118,7 +132,15 @@ function TablaRanking({ filas }: { filas: Anulados['rankingHoy'] }) {
       <tbody>
         {filas.map((f) => (
           <tr key={f.codigo} className="border-t border-border">
-            <td className="py-2">{f.nombre}</td>
+            <td className="py-2">
+              <button
+                type="button"
+                onClick={() => onSeleccionarCajero({ codigo: f.codigo, nombre: f.nombre })}
+                className="text-left hover:text-primary hover:underline"
+              >
+                {f.nombre}
+              </button>
+            </td>
             <td className="py-2 text-right tabular-nums">{f.anulados}</td>
           </tr>
         ))}

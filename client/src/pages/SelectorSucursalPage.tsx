@@ -29,7 +29,11 @@ export function SelectorSucursalPage() {
           </button>
         ))}
       </div>
-      <Button variant="destructive" onClick={() => logout()}>
+      <Button
+        variant="destructive"
+        className="bg-destructive-solid text-primary-foreground hover:bg-destructive-solid/90"
+        onClick={() => logout()}
+      >
         Cerrar sesión
       </Button>
     </div>

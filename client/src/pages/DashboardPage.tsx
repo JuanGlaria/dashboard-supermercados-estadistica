@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import {
   Area,
   AreaChart,
@@ -18,27 +18,52 @@ import { BarraProgreso } from '@/components/BarraProgreso'
 import { ChartCard } from '@/components/ChartCard'
 import { KpiCard } from '@/components/KpiCard'
 import { getDashboard, type DashboardVentas } from '@/lib/api'
+import type { EstadoCarga } from '@/lib/estadoCarga'
 import { abreviarMoneda, formatoFecha, formatoFechaLarga, formatoMoneda } from '@/lib/formato'
+import { useTenant } from '@/lib/tenant'
 
 const COLORES_EVENTOS = ['var(--chart-2)', 'var(--chart-1)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
 
 export function DashboardPage() {
   const { sucursal } = useParams()
-  const [datos, setDatos] = useState<DashboardVentas | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const fecha = searchParams.get('fecha') ?? undefined
+  const tenant = useTenant()
+  const [estado, setEstado] = useState<EstadoCarga<DashboardVentas>>({ status: 'cargando' })
 
   useEffect(() => {
     if (!sucursal) return
-    setDatos(null)
-    setError(null)
-    getDashboard(sucursal).then(setDatos).catch((err) => setError(err.message))
-  }, [sucursal])
+    let cancelado = false
+
+    function cargar(mostrarCargando: boolean) {
+      if (mostrarCargando) setEstado({ status: 'cargando' })
+      getDashboard(sucursal!, fecha)
+        .then((datos) => {
+          if (!cancelado) setEstado({ status: 'listo', datos })
+        })
+        .catch((err) => {
+          if (!cancelado) setEstado({ status: 'error', mensaje: err.message })
+        })
+    }
+
+    cargar(true)
+
+    let intervalo: ReturnType<typeof setInterval> | undefined
+    if (tenant.refrescoMinutos && !fecha) {
+      intervalo = setInterval(() => cargar(false), tenant.refrescoMinutos * 60_000)
+    }
+
+    return () => {
+      cancelado = true
+      if (intervalo) clearInterval(intervalo)
+    }
+  }, [sucursal, fecha, tenant.refrescoMinutos])
 
   return (
     <AppShell>
-      {error && <div className="p-8 text-destructive">{error}</div>}
-      {!error && !datos && <div className="p-8 text-muted-foreground">Cargando...</div>}
-      {datos && <Contenido datos={datos} />}
+      {estado.status === 'error' && <div className="p-8 text-destructive">{estado.mensaje}</div>}
+      {estado.status === 'cargando' && <div className="p-8 text-muted-foreground">Cargando...</div>}
+      {estado.status === 'listo' && <Contenido datos={estado.datos} />}
     </AppShell>
   )
 }

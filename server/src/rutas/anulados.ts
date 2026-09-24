@@ -1,6 +1,7 @@
 import { Router } from 'express'
-import { hoy } from '../common/fechas.js'
+import { hoy, parseFechaQuery } from '../common/fechas.js'
 import type { Sucursal } from '../db/config.js'
+import { SUCURSAL_IDS } from '../config/sucursales.js'
 import { getPool } from '../db/pool.js'
 import { getAnulados, getDetalleTicket, getHistorialCajero, totalAnuladosDia } from '../repositorio/anulados.js'
 import { requiereAccesoSucursal, requiereLogin } from '../auth/middleware.js'
@@ -8,7 +9,7 @@ import { requiereAccesoSucursal, requiereLogin } from '../auth/middleware.js'
 export const anuladosRouter = Router()
 
 anuladosRouter.get('/resumen', requiereLogin, async (req, res) => {
-  const sucursales = req.usuario!.sucursales === 'todas' ? (['lavalle', 'savio', 'somisa'] as const) : req.usuario!.sucursales
+  const sucursales = req.usuario!.sucursales === 'todas' ? SUCURSAL_IDS : req.usuario!.sucursales
   const fechaHoy = hoy()
 
   const resumen = await Promise.all(
@@ -29,7 +30,7 @@ anuladosRouter.get('/resumen', requiereLogin, async (req, res) => {
 anuladosRouter.get('/:sucursal', requiereLogin, requiereAccesoSucursal, async (req, res) => {
   try {
     const pool = await getPool(req.params.sucursal as Sucursal)
-    const datos = await getAnulados(pool)
+    const datos = await getAnulados(pool, parseFechaQuery(req.query.fecha))
     res.json(datos)
   } catch (err) {
     console.error(err)

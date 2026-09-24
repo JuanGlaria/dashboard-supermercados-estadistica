@@ -1,0 +1,7 @@
+{
+  "name": "dashboard-supermercado-estadistica",
+  "private": true,
+  "scripts": {
+    "dev": "(cd server && npm run dev) & (cd client && npm run dev) & wait"
+  }
+}

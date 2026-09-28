@@ -22,7 +22,7 @@ import type { EstadoCarga } from '@/lib/estadoCarga'
 import { abreviarMoneda, formatoFecha, formatoFechaLarga, formatoMoneda } from '@/lib/formato'
 import { useTenant } from '@/lib/tenant'
 
-const COLORES_EVENTOS = ['var(--chart-2)', 'var(--chart-1)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
+const COLORES_EVENTOS = ['var(--chart-2)', 'var(--chart-1)', 'var(--chart-3)', 'var(--chart-6)', 'var(--chart-5)', 'var(--chart-7)']
 
 export function DashboardPage() {
   const { sucursal } = useParams()
@@ -84,7 +84,6 @@ function Contenido({ datos }: { datos: DashboardVentas }) {
   ].filter((e) => e.cantidad > 0)
 
   const maxUltimosDias = Math.max(...datos.ventasUltimosDias.map((d) => d.total), 1)
-  const maxTarjeta = datos.ventasTarjetas[0]?.total ?? 1
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-8">
@@ -110,8 +109,8 @@ function Contenido({ datos }: { datos: DashboardVentas }) {
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="fecha" tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
-              <YAxis tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="fecha" tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontFamily: 'var(--font-numeric)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+              <YAxis tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontFamily: 'var(--font-numeric)' }} axisLine={false} tickLine={false} />
               <Tooltip formatter={(v) => formatoMoneda(Number(v))} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8 }} />
               <Legend />
               <Area type="monotone" dataKey="pasada" name="Semana pasada" stroke="var(--navy)" fill="url(#gradPasada)" strokeWidth={2} />
@@ -136,11 +135,7 @@ function Contenido({ datos }: { datos: DashboardVentas }) {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <ChartCard titulo="Ventas por medios de pago">
-          <div className="flex h-full flex-col justify-center gap-1">
-            {datos.mediosPago.map((m) => (
-              <BarraProgreso key={m.nombre} etiqueta={m.nombre} valor={abreviarMoneda(m.total)} porcentaje={m.porcentaje} />
-            ))}
-          </div>
+          <PieConListado items={datos.mediosPago} />
         </ChartCard>
 
         <ChartCard titulo="Eventos de tickets">
@@ -149,32 +144,93 @@ function Contenido({ datos }: { datos: DashboardVentas }) {
               Sin eventos hoy
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={eventos} dataKey="cantidad" nameKey="nombre" innerRadius={50} outerRadius={80}>
-                  {eventos.map((_, i) => (
-                    <Cell key={i} fill={COLORES_EVENTOS[i % COLORES_EVENTOS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8 }} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieConListado
+              items={eventos.map((e) => ({ nombre: e.nombre, total: e.cantidad }))}
+              formatearValor={String}
+              formatearValorCorto={String}
+            />
           )}
         </ChartCard>
 
         <ChartCard titulo="Ventas en tarjetas">
-          <div className="flex h-full flex-col justify-center gap-1 overflow-y-auto">
-            {datos.ventasTarjetas.slice(0, 7).map((c) => (
-              <BarraProgreso
-                key={c.nombre}
-                etiqueta={c.nombre}
-                valor={abreviarMoneda(c.total)}
-                porcentaje={(c.total * 100) / maxTarjeta}
-              />
-            ))}
-          </div>
+          <PieConListado items={datos.ventasTarjetas.slice(0, 7)} />
         </ChartCard>
+      </div>
+    </div>
+  )
+}
+
+function PieConListado({
+  items,
+  formatearValor = formatoMoneda,
+  formatearValorCorto = abreviarMoneda,
+}: {
+  items: { nombre: string; total: number }[]
+  formatearValor?: (n: number) => string
+  formatearValorCorto?: (n: number) => string
+}) {
+  const [activo, setActivo] = useState<number | undefined>(undefined)
+
+  if (items.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Sin ventas</div>
+    )
+  }
+
+  return (
+    <div className="flex h-full items-center gap-3">
+      <div className="relative h-full w-1/2 shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={items}
+              dataKey="total"
+              nameKey="nombre"
+              outerRadius={80}
+              onMouseEnter={(_, i) => setActivo(i)}
+              onMouseLeave={() => setActivo(undefined)}
+            >
+              {items.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={COLORES_EVENTOS[i % COLORES_EVENTOS.length]}
+                  opacity={activo === undefined || activo === i ? 1 : 0.35}
+                />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        {activo !== undefined && (
+          <div className="pointer-events-none absolute bottom-1 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs font-medium whitespace-nowrap text-background">
+            <span
+              className="size-2 shrink-0 rounded-full"
+              style={{ background: COLORES_EVENTOS[activo % COLORES_EVENTOS.length] }}
+            />
+            {items[activo].nombre} : {formatearValor(items[activo].total)}
+          </div>
+        )}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-y-auto">
+        {items.map((c, i) => (
+          <button
+            key={c.nombre}
+            type="button"
+            className={`flex items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-muted focus-visible:bg-muted ${activo === i ? 'bg-muted' : ''}`}
+            onMouseEnter={() => setActivo(i)}
+            onMouseLeave={() => setActivo(undefined)}
+            onFocus={() => setActivo(i)}
+            onBlur={() => setActivo(undefined)}
+          >
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ background: COLORES_EVENTOS[i % COLORES_EVENTOS.length] }}
+            />
+            <span className="truncate text-xs font-medium text-muted-foreground uppercase">{c.nombre}</span>
+            <span className="font-numeric ml-auto text-xs font-medium tabular-nums text-foreground">
+              {formatearValorCorto(c.total)}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   )

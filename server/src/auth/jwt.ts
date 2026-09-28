@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import type { Sucursal } from '../config/sucursales.js'
 
 const SECRET = process.env.JWT_SECRET!
-const COOKIE_NAME = 'token'
+const COOKIE_NAME = 'sj_dash_token'
 const EXPIRACION = '7d'
 
 export type TokenPayload = {

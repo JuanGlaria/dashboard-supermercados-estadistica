@@ -10,12 +10,12 @@ export function KpiCard({
   variacion?: number
 }) {
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <CardTitle className="text-sm font-medium text-muted-foreground">{titulo}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-bold text-foreground">{valor}</div>
+        <div className="font-numeric text-4xl font-bold tabular-nums text-foreground">{valor}</div>
         {variacion !== undefined && (
           <p className={variacion >= 0 ? 'text-sm text-primary' : 'text-sm text-destructive'}>
             {variacion >= 0 ? '+' : ''}

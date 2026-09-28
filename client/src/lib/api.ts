@@ -47,6 +47,9 @@ export type DetalleTicket = { items: DetalleTicketItem[]; total: number }
 
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url, { credentials: 'include' })
+  if (res.status === 401) {
+    window.dispatchEvent(new Event('auth:expired'))
+  }
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({ error: 'Error de red' }))
     throw new Error(error ?? 'Error de red')

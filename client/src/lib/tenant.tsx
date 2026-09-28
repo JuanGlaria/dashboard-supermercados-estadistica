@@ -5,6 +5,7 @@ export type TenantConfig = {
   logoUrl: string | null
   faviconUrl: string | null
   colorPrimary: string | null
+  refrescoMinutos: number | null
   sucursales: { id: string; nombre: string }[]
 }
 
@@ -13,6 +14,7 @@ const DEFAULT_CONFIG: TenantConfig = {
   logoUrl: null,
   faviconUrl: null,
   colorPrimary: null,
+  refrescoMinutos: null,
   sucursales: [],
 }
 

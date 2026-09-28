@@ -80,7 +80,7 @@ async function mediosPago(pool: ConnectionPool, fecha: Date, totalDia: number): 
       ORDER BY total DESC
     `)
   return result.recordset.map((r) => ({
-    nombre: r.nombre?.trim() ?? 'Sin identificar',
+    nombre: r.nombre?.trim() || 'Sin identificar',
     total: r.total,
     porcentaje: totalDia ? Math.round((r.total * 100) / totalDia) : 0,
   }))
@@ -93,15 +93,20 @@ async function ventasTarjetas(pool: ConnectionPool, fecha: Date): Promise<VentaT
     .request()
     .input('fecha', sql.Date, fecha)
     .query<{ nombre: string; total: number }>(`
+      -- c1_codigo de tarjetas reales (bancos) no existe en mpagos, por eso LEFT JOIN.
+      -- Se excluyen los codigo que sí matchean en mpagos con tipo='R' (retenciones,
+      -- ej. codigo 4 "RETENCION I.V.A.") porque no son medios de pago con tarjeta
+      -- y aparecían en el listado con nombre vacío.
       SELECT MAX(c1_nombre) AS nombre, SUM(c1_monto) AS total
       FROM cuptar
-      WHERE c1_fecha = @fecha
+      LEFT JOIN mpagos ON mpagos.codigo = cuptar.c1_codigo
+      WHERE c1_fecha = @fecha AND (mpagos.tipo IS NULL OR mpagos.tipo <> 'R')
       GROUP BY c1_nombre
       ORDER BY total DESC
     `)
   const max = result.recordset[0]?.total ?? 0
   return result.recordset.map((r) => ({
-    nombre: r.nombre?.trim() ?? 'Sin identificar',
+    nombre: r.nombre?.trim() || 'Otras tarjetas',
     total: r.total,
     porcentaje: max ? Math.round((r.total * 100) / max) : 0,
   }))

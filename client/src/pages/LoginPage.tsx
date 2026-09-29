@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -14,19 +15,17 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [verPassword, setVerPassword] = useState(false)
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setError(null)
     setEnviando(true)
     try {
       await login(usuario, password)
       navigate('/')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión')
+      toast.error(err instanceof Error ? err.message : 'Error al iniciar sesión')
     } finally {
       setEnviando(false)
     }
@@ -75,7 +74,6 @@ export function LoginPage() {
                 </button>
               </div>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={enviando}>
               {enviando ? 'Ingresando...' : 'Ingresar'}
             </Button>

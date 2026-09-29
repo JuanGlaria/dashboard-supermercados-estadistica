@@ -3,3 +3,5 @@ dist/
 .env
 .playwright-mcp/
 .claude/
+memoria.md
+proximas-mejoras.md

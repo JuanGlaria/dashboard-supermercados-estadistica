@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       port: Number(env.CLIENT_PORT) || 5173,
       strictPort: true,
       proxy: {
-        '/api': `http://localhost:${env.SERVER_PORT || 3001}`,
+        '/api': `http://localhost:${env.SERVER_PORT || 6001}`,
       },
     },
   }

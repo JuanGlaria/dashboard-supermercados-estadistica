@@ -38,7 +38,7 @@ cp server/.env.example server/.env
 cp client/.env.example client/.env   # solo desarrollo
 ```
 
-`client/.env` define `CLIENT_PORT` (dev server de Vite, default 5173) y `SERVER_PORT` (debe coincidir con `PORT` de `server/.env`, default 3001). Si un puerto está ocupado, cambiarlo ahí.
+`client/.env` define `CLIENT_PORT` (dev server de Vite, default 5173) y `SERVER_PORT` (debe coincidir con `PORT` de `server/.env`, default 6001). Si un puerto está ocupado, cambiarlo ahí.
 
 Completar `server/.env` con:
 
@@ -50,6 +50,10 @@ Completar `server/.env` con:
 - **`JWT_SECRET`** — secreto para firmar la sesión (cambiar el valor de ejemplo).
 - **Branding** (todo opcional, cae a defaults genéricos si se omite): `NOMBRE_CLIENTE`, `LOGO_URL`, `FAVICON_URL`, `COLOR_PRIMARY`.
 - **`REFRESCO_MINUTOS`** — auto-refresh del dashboard (vacío o `0` = desactivado).
+- **`PORT`** — puerto del server (default 6001).
+- **Solo producción** (ver "Build / producción"): `NODE_ENV`, `TZ`, `BASE_PATH`, `COOKIE_PATH`. `CORS_ORIGIN` solo si el client se sirve desde otro origen (vacío = sin CORS).
+
+Todas están comentadas en `server/.env.example`. En desarrollo dejar `BASE_PATH` vacío: Vite proxea `/api` sin prefijo.
 
 ## Correr en desarrollo
 
@@ -66,25 +70,39 @@ npm run dev
 
 ## Build / producción
 
+El server Express sirve también el client compilado (`client/dist`) y la API, todo en un solo proceso y puerto. Hay que buildear el client **antes** de arrancar el server:
+
 ```bash
-cd server && npm run build && npm start   # compila a dist/ y corre con node
 cd client && npm run build                # build estático en client/dist
+cd server && npm run build && npm start   # compila a dist/ y corre con node
 ```
 
-### Deploy detrás de nginx (subpath `/dash`)
+`GET <BASE_PATH>/health` responde `{"status":"ok"}` para probar que el server está arriba.
+
+Para probar el build en local (sin Vite): `cd client && npm run build`, luego `cd server && npm run dev` y abrir `http://localhost:<PORT>/` (con subpath: buildear con `VITE_BASE=/dash/`, arrancar con `BASE_PATH=/dash` y abrir `/dash/`).
+
+### Publicar bajo un subpath (ej. `/dash`)
 
 Build del client con prefijo: `cd client && VITE_BASE=/dash/ npm run build`.
 
-En `server/.env` (además de lo de arriba): `NODE_ENV=production`, `COOKIE_PATH=/dash`, `TZ=America/Argentina/Buenos_Aires`. El server arranca solo si están todas las variables requeridas; si falta alguna, lista cuáles y sale.
+En `server/.env` (además de lo de arriba): `BASE_PATH=/dash` (mismo prefijo que `VITE_BASE`, sin barra final), `NODE_ENV=production`, `TZ=America/Argentina/Buenos_Aires`. La cookie usa `BASE_PATH` como path salvo que se defina `COOKIE_PATH`. El server arranca solo si están todas las variables requeridas; si falta alguna, lista cuáles y sale.
 
-nginx sirve el estático y proxea `/dash/api/` al server (strippeando `/dash`):
+Sin subpath (raíz o subdominio): build sin `VITE_BASE` y `BASE_PATH` vacío.
+
+### nginx como proxy HTTPS
+
+nginx solo reenvía todo al server, sin `alias` ni strippear el prefijo:
 
 ```nginx
-location /dash/api/ { proxy_pass http://127.0.0.1:<PORT>/api/; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
-location /dash/ { alias /ruta/al/client/dist/; try_files $uri $uri/ /dash/index.html; }
+location = /dash { return 301 /dash/; }
+location /dash/ {
+  proxy_pass http://127.0.0.1:<PORT>;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+}
 ```
 
-Sin subpath (raíz o subdominio): build sin `VITE_BASE` y `COOKIE_PATH=/`.
+Sin subpath: `location / { proxy_pass http://127.0.0.1:<PORT>; ... }`.
 
 ### Correr el server con pm2 y Node 22.18.0
 
@@ -102,6 +120,7 @@ Verificar que quedó con la versión correcta:
 ```bash
 pm2 describe sj-panel | grep -i "interpreter"   # debe mostrar .../v22.18.0/bin/node
 pm2 logs sj-panel --lines 20                     # debe decir "Server escuchando en puerto ..."
+curl http://127.0.0.1:<PORT>/dash/health         # debe devolver {"status":"ok"} (sin /dash si no hay subpath)
 ```
 
 Para arrancar solo tras un reinicio del VPS: `pm2 startup` (ejecutar el comando que imprime) y luego `pm2 save`.
@@ -111,8 +130,8 @@ Actualizar una versión nueva del código:
 ```bash
 cd /ruta/al/repo && git pull
 cd server && nvm exec 22.18.0 npm install && nvm exec 22.18.0 npm run build
+cd ../client && nvm exec 22.18.0 npm install && VITE_BASE=/dash/ nvm exec 22.18.0 npm run build
 pm2 restart sj-panel --update-env
-cd ../client && VITE_BASE=/dash/ nvm exec 22.18.0 npm run build   # solo si hay cambios en client/
 ```
 
 Cambiar de versión de Node: `pm2 delete sj-panel`, volver a instalar y compilar con la nueva versión (`nvm exec <versión> ...`) y arrancar de nuevo con `--interpreter ~/.nvm/versions/node/v<versión>/bin/node`.
@@ -126,6 +145,7 @@ server/src/
   db/           pool de conexión mssql por sucursal
   repositorio/  queries SQL (ventas, anulados)
   rutas/        endpoints Express
+  index.ts      arranque: API, /health y estáticos de client/dist
 
 client/src/
   components/   AppShell, Sidebar, charts, diálogos

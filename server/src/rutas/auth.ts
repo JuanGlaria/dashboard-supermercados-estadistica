@@ -7,7 +7,7 @@ import { requiereLogin } from '../auth/middleware.js'
 
 export const authRouter = Router()
 
-const COOKIE_PATH = process.env.COOKIE_PATH ?? '/'
+const COOKIE_PATH = process.env.COOKIE_PATH || process.env.BASE_PATH?.replace(/\/+$/, '') || '/'
 const opcionesCookie = {
   httpOnly: true,
   sameSite: 'lax',

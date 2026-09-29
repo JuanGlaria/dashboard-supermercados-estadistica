@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import path from 'node:path'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
@@ -30,19 +31,41 @@ validarEnv()
 const app = express()
 
 app.set('trust proxy', 1)
-app.use(helmet())
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: { 'img-src': ["'self'", 'data:', 'https:'] },
+    },
+  }),
+)
 app.use(express.json())
 app.use(cookieParser())
 if (process.env.CORS_ORIGIN) {
   app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }))
 }
 
-app.use('/api/auth', authRouter)
-app.use('/api/dashboard', dashboardRouter)
-app.use('/api/anulados', anuladosRouter)
-app.use('/api/config', configRouter)
+const BASE_PATH = (process.env.BASE_PATH ?? '').replace(/\/+$/, '')
+const CLIENT_DIST = path.resolve(import.meta.dirname, '../../client/dist')
 
-const PORT = process.env.PORT ?? 3001
+const rutas = express.Router()
+rutas.get('/health', (_req, res) => {
+  res.json({ status: 'ok' })
+})
+rutas.use('/api/auth', authRouter)
+rutas.use('/api/dashboard', dashboardRouter)
+rutas.use('/api/anulados', anuladosRouter)
+rutas.use('/api/config', configRouter)
+rutas.use(express.static(CLIENT_DIST))
+rutas.use((req, res, next) => {
+  if (req.method !== 'GET' || req.path.startsWith('/api/') || path.extname(req.path)) return next()
+  res.sendFile(path.join(CLIENT_DIST, 'index.html'), (err) => {
+    if (err) next()
+  })
+})
+
+app.use(BASE_PATH || '/', rutas)
+
+const PORT = process.env.PORT || 6001
 const server = app.listen(PORT, () => {
   console.log(`Server escuchando en puerto ${PORT}`)
 })

@@ -12,9 +12,12 @@ Panel estadístico de solo lectura contra bases SQL Server operativas por sucurs
 ```bash
 git clone <url-del-repo>
 cd dashboard-supermercado-estadistica
-cd server && npm install && cd ..
-cd client && npm install && cd ..
+source ~/.nvm/nvm.sh                          # cargar nvm si es una sesión ssh / no interactiva
+cd server && nvm exec 22.18.0 npm install && cd ..
+cd client && nvm exec 22.18.0 npm install && cd ..
 ```
+
+Sin nvm (máquina con una sola versión de Node 20+): reemplazar `nvm exec 22.18.0 npm install` por `npm install`.
 
 ### Instalación en el servidor (varias versiones de Node)
 

@@ -4,7 +4,7 @@ Panel estadístico de solo lectura contra bases SQL Server operativas por sucurs
 
 ## Requisitos
 
-- Node.js 20+ (en el servidor se usa 22.18.0, ver "Instalación en el servidor")
+- Node.js 20+ (en el servidor se usa 22.18.0 vía nvm)
 - Acceso a las bases SQL Server de cada sucursal
 
 ## Instalación
@@ -29,36 +29,16 @@ cd server && nvm exec 22.18.0 npm install && cd ..
 cd client && nvm exec 22.18.0 npm install && cd ..
 ```
 
-### Instalación en el servidor (varias versiones de Node)
-
-El proyecto se instala y corre con **Node 22.18.0** (instalada vía nvm). Todos los comandos se ejecutan desde la raíz del repo clonado.
-
-```bash
-# 1. Cargar nvm en la sesión (necesario en shells no interactivos / ssh)
-source ~/.nvm/nvm.sh
-
-# 2. Confirmar que la versión existe (si no: nvm install 22.18.0)
-nvm ls 22.18.0
-
-# 3. Instalar dependencias y compilar el server con esa versión
-cd server
-nvm exec 22.18.0 npm install
-nvm exec 22.18.0 npm run build      # genera server/dist/index.js
-cd ..
-
-# 4. Instalar dependencias del client (el build del client va en "Build / producción")
-cd client
-nvm exec 22.18.0 npm install
-cd ..
-```
-
-No usar `npm install` a secas en el servidor: tomaría el Node por defecto del sistema, que puede ser otra versión.
+No usar `npm install` a secas en el servidor: tomaría el Node por defecto del sistema, que puede ser otra versión. Si falta la versión: `nvm install 22.18.0`.
 
 ## Configuración
 
 ```bash
 cp server/.env.example server/.env
+cp client/.env.example client/.env   # solo desarrollo
 ```
+
+`client/.env` define `CLIENT_PORT` (dev server de Vite, default 5173) y `SERVER_PORT` (debe coincidir con `PORT` de `server/.env`, default 3001). Si un puerto está ocupado, cambiarlo ahí.
 
 Completar `server/.env` con:
 
@@ -79,8 +59,8 @@ Desde la raíz, levanta client y server en paralelo:
 npm run dev
 ```
 
-- Client: http://localhost:5173
-- Server: http://localhost:3001 (proxeado por Vite bajo `/api`)
+- Client: `http://localhost:<CLIENT_PORT>`
+- Server: `http://localhost:<PORT>` (proxeado por Vite bajo `/api`)
 
 `tsx watch` no relee `.env` en caliente — si se edita a mano, hay que reiniciar el proceso del server.
 
@@ -93,16 +73,14 @@ cd client && npm run build                # build estático en client/dist
 
 ### Deploy detrás de nginx (subpath `/dash`)
 
-```bash
-cd client && VITE_BASE=/dash/ npm run build   # assets y rutas con prefijo /dash/
-```
+Build del client con prefijo: `cd client && VITE_BASE=/dash/ npm run build`.
 
 En `server/.env` (además de lo de arriba): `NODE_ENV=production`, `COOKIE_PATH=/dash`, `TZ=America/Argentina/Buenos_Aires`. El server arranca solo si están todas las variables requeridas; si falta alguna, lista cuáles y sale.
 
 nginx sirve el estático y proxea `/dash/api/` al server (strippeando `/dash`):
 
 ```nginx
-location /dash/api/ { proxy_pass http://127.0.0.1:3001/api/; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
+location /dash/api/ { proxy_pass http://127.0.0.1:<PORT>/api/; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
 location /dash/ { alias /ruta/al/client/dist/; try_files $uri $uri/ /dash/index.html; }
 ```
 
@@ -154,5 +132,3 @@ client/src/
   pages/        Login, selector de sucursal, Dashboard, Anulados, 404
   lib/          fetch wrapper, auth/tenant context, formato
 ```
-
-No hay test suite ni linter configurado todavía.

@@ -1,5 +1,5 @@
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Sidebar } from '@/components/Sidebar'
 import { fechaISOHoy } from '@/lib/formato'
@@ -26,9 +26,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     year: 'numeric',
   })
 
-  function cambiarFecha(valor: string) {
-    setSearchParams(valor === hoyISO ? {} : { fecha: valor })
-  }
+  const [borrador, setBorrador] = useState(fechaSeleccionada)
+
+  // Espera a que termine de tipear antes de cambiar la fecha (cada dígito válido dispararía un refetch).
+  useEffect(() => {
+    if (!borrador || borrador === fechaSeleccionada) return
+    const t = setTimeout(() => setSearchParams(borrador === hoyISO ? {} : { fecha: borrador }), 700)
+    return () => clearTimeout(t)
+  }, [borrador, fechaSeleccionada, hoyISO, setSearchParams])
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,9 +53,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </h2>
           <input
             type="date"
-            value={fechaSeleccionada}
+            value={borrador}
             max={hoyISO}
-            onChange={(e) => cambiarFecha(e.target.value)}
+            onChange={(e) => setBorrador(e.target.value)}
             className="ml-auto rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground"
             aria-label="Elegir fecha"
           />

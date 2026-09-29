@@ -1,5 +1,5 @@
 import { LayoutDashboard, LogOut, Store } from 'lucide-react'
-import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { useTenant } from '@/lib/tenant'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   const tenant = useTenant()
   const navigate = useNavigate()
   const { sucursal: sucursalActual } = useParams()
+  const [searchParams] = useSearchParams()
   if (!usuario) return null
+
+  const fecha = searchParams.get('fecha')
+  const queryFecha = fecha ? `?fecha=${fecha}` : ''
 
   const sucursales =
     usuario.sucursales === 'todas' ? tenant.sucursales : tenant.sucursales.filter((s) => usuario.sucursales.includes(s.id))
@@ -45,7 +49,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           {sucursales.map((s) => (
             <NavLink
               key={s.id}
-              to={`/dashboard/${s.id}`}
+              to={`/dashboard/${s.id}${queryFecha}`}
               className={({ isActive }) =>
                 `flex items-center gap-3 border-l-[3px] px-5 py-3 transition-colors ${
                   isActive
@@ -59,7 +63,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             </NavLink>
           ))}
           <NavLink
-            to={`/anulados/${sucursalActual ?? sucursales[0]?.id}`}
+            to={`/anulados/${sucursalActual ?? sucursales[0]?.id}${queryFecha}`}
             className={({ isActive }) =>
               `flex items-center gap-3 border-l-[3px] px-5 py-3 transition-colors ${
                 isActive

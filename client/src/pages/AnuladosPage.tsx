@@ -40,7 +40,7 @@ export function AnuladosPage() {
             {resumen.map((r) => (
               <button
                 key={r.sucursal}
-                onClick={() => navigate(`/anulados/${r.sucursal}`)}
+                onClick={() => navigate(`/anulados/${r.sucursal}${fecha ? `?fecha=${fecha}` : ''}`)}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-lg border p-4 transition-colors ${
                   r.sucursal === sucursal ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
                 }`}

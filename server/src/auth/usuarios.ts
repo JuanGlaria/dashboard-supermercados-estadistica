@@ -1,22 +1,21 @@
-import { SUCURSAL_IDS, type Sucursal } from '../config/sucursales.js'
+import sql from 'mssql'
+import { getPoolCasaCentral } from '../db/pool.js'
 
-export type Usuario = {
-  usuario: string
-  password: string
-  sucursales: Sucursal[] | 'todas'
+export type UsuarioSecr = { usuario: string; autorizado: boolean }
+
+export async function buscarUsuarioSecr(
+  usuario: string,
+  clave: string,
+): Promise<UsuarioSecr | undefined> {
+  const pool = await getPoolCasaCentral()
+  const { recordset } = await pool
+    .request()
+    .input('usuario', sql.VarChar(20), usuario)
+    .input('clave', sql.VarChar(10), clave)
+    .query<{ usuario: string; niveles: string }>(
+      `SELECT RTRIM(usuario) AS usuario, niveles FROM SECR
+       WHERE RTRIM(usuario) = @usuario AND RTRIM(clave) = @clave`,
+    )
+  const encontrado = recordset[0]
+  return encontrado && { usuario: encontrado.usuario, autorizado: encontrado.niveles.includes('#DASH') }
 }
-
-const usuariosPorSucursal: Usuario[] = SUCURSAL_IDS.map((id) => ({
-  usuario: process.env[`LOGIN_${id.toUpperCase()}_USER`]!,
-  password: process.env[`LOGIN_${id.toUpperCase()}_PASSWORD`]!,
-  sucursales: [id],
-}))
-
-export const USUARIOS: Usuario[] = [
-  ...usuariosPorSucursal,
-  {
-    usuario: process.env.LOGIN_ADMIN_USER!,
-    password: process.env.LOGIN_ADMIN_PASSWORD!,
-    sucursales: 'todas',
-  },
-]

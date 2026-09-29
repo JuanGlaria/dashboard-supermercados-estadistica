@@ -44,9 +44,8 @@ Completar `server/.env` con:
 
 - **`SUCURSALES`**: lista de ids separados por coma (ej. `lavalle,savio,somisa`). Cada id define el resto de sus propias variables:
   - `DB_<ID>_SERVER` / `_PORT` / `_DATABASE` / `_USER` / `_PASSWORD` — conexión SQL Server de esa sucursal.
-  - `LOGIN_<ID>_USER` / `_PASSWORD` — usuario que ve solo esa sucursal.
   - `SUCURSAL_<ID>_NOMBRE` — nombre para mostrar (opcional, si se omite usa el id capitalizado).
-- **`LOGIN_ADMIN_USER`** / **`LOGIN_ADMIN_PASSWORD`** — usuario que ve todas las sucursales.
+- **`DB_CASA_CENTRAL_SERVER`** / `_PORT` / `_DATABASE` / `_USER` / `_PASSWORD` — base de casa central. El login valida usuario y clave contra la tabla `SECR`; `niveles` debe contener `#DASH`. Quien entra ve todas las sucursales.
 - **`JWT_SECRET`** — secreto para firmar la sesión (cambiar el valor de ejemplo).
 - **Branding** (todo opcional, cae a defaults genéricos si se omite): `NOMBRE_CLIENTE`, `LOGO_URL`, `FAVICON_URL`, `COLOR_PRIMARY`.
 - **`REFRESCO_MINUTOS`** — auto-refresh del dashboard (vacío o `0` = desactivado).

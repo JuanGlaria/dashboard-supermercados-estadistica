@@ -1,7 +1,6 @@
-import { createHash, timingSafeEqual } from 'node:crypto'
 import { Router } from 'express'
 import { rateLimit } from 'express-rate-limit'
-import { USUARIOS } from '../auth/usuarios.js'
+import { buscarUsuarioSecr } from '../auth/usuarios.js'
 import { COOKIE_NAME, firmarToken } from '../auth/jwt.js'
 import { requiereLogin } from '../auth/middleware.js'
 
@@ -23,27 +22,34 @@ const limiteLogin = rateLimit({
   message: { error: 'Demasiados intentos, probá de nuevo en unos minutos' },
 })
 
-function igual(a: string, b: string): boolean {
-  const ha = createHash('sha256').update(a).digest()
-  const hb = createHash('sha256').update(b).digest()
-  return timingSafeEqual(ha, hb)
-}
-
-authRouter.post('/login', limiteLogin, (req, res) => {
+authRouter.post('/login', limiteLogin, async (req, res) => {
   const { usuario, password } = req.body as { usuario?: unknown; password?: unknown }
-  const encontrado =
-    typeof usuario === 'string' && typeof password === 'string'
-      ? USUARIOS.find((u) => igual(u.usuario, usuario) && igual(u.password, password))
-      : undefined
+  let encontrado
+  try {
+    encontrado =
+      typeof usuario === 'string' && typeof password === 'string'
+        ? await buscarUsuarioSecr(usuario, password)
+        : undefined
+  } catch (err) {
+    console.error('[login] error consultando casa central', err)
+    res.status(502).json({ error: 'No se pudo validar el usuario, probá de nuevo' })
+    return
+  }
 
   if (!encontrado) {
     res.status(401).json({ error: 'Usuario o contraseña incorrectos' })
     return
   }
 
-  const token = firmarToken({ usuario: encontrado.usuario, sucursales: encontrado.sucursales })
+  if (!encontrado.autorizado) {
+    res.status(403).json({ error: 'No tenés autorización para acceder al panel. Hablá con el administrador.' })
+    return
+  }
+
+  const sucursales = 'todas'
+  const token = firmarToken({ usuario: encontrado.usuario, sucursales })
   res.cookie(COOKIE_NAME, token, { ...opcionesCookie, maxAge: 7 * 24 * 60 * 60 * 1000 })
-  res.json({ usuario: encontrado.usuario, sucursales: encontrado.sucursales })
+  res.json({ usuario: encontrado.usuario, sucursales })
 })
 
 authRouter.post('/logout', (_req, res) => {

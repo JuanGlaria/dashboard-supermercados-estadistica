@@ -14,10 +14,10 @@ import { cerrarPools } from './db/pool.js'
 process.env.TZ ||= 'America/Argentina/Buenos_Aires'
 
 function validarEnv() {
-  const requeridas = ['JWT_SECRET', 'SUCURSALES', 'LOGIN_ADMIN_USER', 'LOGIN_ADMIN_PASSWORD']
+  const requeridas = ['JWT_SECRET', 'SUCURSALES', 'DB_CASA_CENTRAL_SERVER', 'DB_CASA_CENTRAL_DATABASE', 'DB_CASA_CENTRAL_USER', 'DB_CASA_CENTRAL_PASSWORD']
   for (const id of SUCURSAL_IDS) {
     const s = id.toUpperCase()
-    requeridas.push(`DB_${s}_SERVER`, `DB_${s}_DATABASE`, `DB_${s}_USER`, `DB_${s}_PASSWORD`, `LOGIN_${s}_USER`, `LOGIN_${s}_PASSWORD`)
+    requeridas.push(`DB_${s}_SERVER`, `DB_${s}_DATABASE`, `DB_${s}_USER`, `DB_${s}_PASSWORD`)
   }
   const faltan = requeridas.filter((k) => !process.env[k])
   if (faltan.length > 0) {

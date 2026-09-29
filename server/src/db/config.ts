@@ -3,8 +3,7 @@ import { SUCURSAL_IDS, type Sucursal } from '../config/sucursales.js'
 
 export type { Sucursal }
 
-function configSucursal(sucursal: Sucursal): MssqlConfig {
-  const prefix = `DB_${sucursal.toUpperCase()}`
+function configDesdePrefijo(prefix: string): MssqlConfig {
   return {
     server: process.env[`${prefix}_SERVER`]!,
     port: Number(process.env[`${prefix}_PORT`] ?? 1433),
@@ -19,5 +18,7 @@ function configSucursal(sucursal: Sucursal): MssqlConfig {
 }
 
 export const dbConfigs: Record<Sucursal, MssqlConfig> = Object.fromEntries(
-  SUCURSAL_IDS.map((id) => [id, configSucursal(id)]),
+  SUCURSAL_IDS.map((id) => [id, configDesdePrefijo(`DB_${id.toUpperCase()}`)]),
 )
+
+export const dbCasaCentral: MssqlConfig = configDesdePrefijo('DB_CASA_CENTRAL')

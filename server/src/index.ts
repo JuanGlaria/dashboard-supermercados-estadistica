@@ -10,7 +10,7 @@ import { configRouter } from './rutas/config.js'
 import { SUCURSAL_IDS } from './config/sucursales.js'
 import { cerrarPools } from './db/pool.js'
 
-process.env.TZ ??= 'America/Argentina/Buenos_Aires'
+process.env.TZ ||= 'America/Argentina/Buenos_Aires'
 
 function validarEnv() {
   const requeridas = ['JWT_SECRET', 'SUCURSALES', 'LOGIN_ADMIN_USER', 'LOGIN_ADMIN_PASSWORD']

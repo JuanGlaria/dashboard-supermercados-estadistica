@@ -1,3 +1,4 @@
+import { API } from '@/lib/api'
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 export type Sucursal = string
@@ -21,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch(`${API}/auth/me`, { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
       .then(setUsuario)
       .finally(() => setCargando(false))
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function login(usuarioLogin: string, password: string) {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' })
     setUsuario(null)
   }
 

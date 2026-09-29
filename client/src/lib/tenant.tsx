@@ -1,3 +1,4 @@
+import { API } from '@/lib/api'
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 export type TenantConfig = {
@@ -24,7 +25,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<TenantConfig>(DEFAULT_CONFIG)
 
   useEffect(() => {
-    fetch('/api/config')
+    fetch(`${API}/config`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: TenantConfig | null) => {
         if (!data) return

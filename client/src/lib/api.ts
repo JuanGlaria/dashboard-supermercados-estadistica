@@ -1,3 +1,5 @@
+export const API = `${import.meta.env.BASE_URL}api`
+
 export type MedioPago = { nombre: string; total: number; porcentaje: number }
 export type VentaTarjeta = { nombre: string; total: number; porcentaje: number }
 export type PuntoVentaDia = { fecha: string; total: number }
@@ -58,21 +60,21 @@ async function get<T>(url: string): Promise<T> {
 }
 
 export function getDashboard(sucursal: string, fecha?: string) {
-  return get<DashboardVentas>(`/api/dashboard/${sucursal}${fecha ? `?fecha=${fecha}` : ''}`)
+  return get<DashboardVentas>(`${API}/dashboard/${sucursal}${fecha ? `?fecha=${fecha}` : ''}`)
 }
 
 export function getAnulados(sucursal: string, fecha?: string) {
-  return get<Anulados>(`/api/anulados/${sucursal}${fecha ? `?fecha=${fecha}` : ''}`)
+  return get<Anulados>(`${API}/anulados/${sucursal}${fecha ? `?fecha=${fecha}` : ''}`)
 }
 
 export function getResumenAnulados() {
-  return get<ResumenAnuladosSucursal[]>('/api/anulados/resumen')
+  return get<ResumenAnuladosSucursal[]>(`${API}/anulados/resumen`)
 }
 
 export function getHistorialCajero(sucursal: string, codigo: number) {
-  return get<HistorialCajero>(`/api/anulados/${sucursal}/cajero/${codigo}`)
+  return get<HistorialCajero>(`${API}/anulados/${sucursal}/cajero/${codigo}`)
 }
 
 export function getDetalleTicket(sucursal: string, nticket: number, letra: string, caja: number) {
-  return get<DetalleTicket>(`/api/anulados/${sucursal}/ticket/${nticket}?letra=${letra}&caja=${caja}`)
+  return get<DetalleTicket>(`${API}/anulados/${sucursal}/ticket/${nticket}?letra=${letra}&caja=${caja}`)
 }

@@ -97,11 +97,11 @@ function Contenido({ datos }: { datos: DashboardVentas }) {
   }));
 
   const eventos = [
-    { nombre: "Anulados", cantidad: datos.eventosTickets.anulados },
-    { nombre: "Editados", cantidad: datos.eventosTickets.editados },
-    { nombre: "Descuentos", cantidad: datos.eventosTickets.descuentos },
-    { nombre: "Personalizados", cantidad: datos.eventosTickets.personalizados },
-    { nombre: "Incompletos", cantidad: datos.eventosTickets.incompletos },
+    { nombre: "Tickets Anulados", cantidad: datos.eventosTickets.anulados },
+    { nombre: "Items Anulados", cantidad: datos.eventosTickets.editados },
+    { nombre: "Alt + D", cantidad: datos.eventosTickets.descuentos },
+    { nombre: "Precio Libre Autorizado", cantidad: datos.eventosTickets.personalizados },
+    { nombre: "Reimprime Ticket", cantidad: datos.eventosTickets.incompletos },
   ].filter((e) => e.cantidad > 0);
 
   const maxUltimosDias = Math.max(
